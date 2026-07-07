@@ -11,7 +11,7 @@ ssh_public_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
 
 # Your workstation's public IP. SSH (22) and the Kubernetes API (6443)
 # are ONLY reachable from this address. Find yours: curl -4 ifconfig.me
-admin_ip: "CHANGEME_ADMIN_IP"
+admin_ip: "79.118.192.248"
 
 # ── k3s ──────────────────────────────────────────────────────────────────────
 k3s_version: v1.36.2+k3s1

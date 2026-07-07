@@ -32,20 +32,19 @@ the registry of product projects — each of which lives in its own git repo.
 
 ## 1. Configure
 
-Repo URLs point at `github.com/dgmmarin` and the domain is `k8s.bitulzero.ro`
-(services: `argocd.`, `grafana.`, `demo.` + `.k8s.bitulzero.ro`). Replace the
-remaining placeholders (grep for them — nothing else needs editing):
+Everything is pre-configured:
 
-```bash
-# Let's Encrypt registration email
-grep -rl 'CHANGEME_EMAIL' --exclude-dir=.git . | xargs sed -i 's/CHANGEME_EMAIL/you@company.com/g'
-
-# Your workstation IP in ansible/group_vars/all.yml (SSH + kube-api firewall)
-sed -i "s/CHANGEME_ADMIN_IP/$(curl -4 -s ifconfig.me)/" ansible/group_vars/all.yml
-```
+- Repo URLs → `github.com/dgmmarin/k8s.cluster`
+- Domain → `k8s.bitulzero.ro` (services: `argocd.`, `grafana.`, `demo.` …)
+- Let's Encrypt email → `daniel.marin@roweb.com`
+  (in `platform/cluster-issuers/`)
+- `admin_ip` in `ansible/group_vars/all.yml` → your workstation's public IP.
+  **If your IP changes** (residential connection), SSH and kube-api become
+  unreachable — update `admin_ip` and re-run `make server` to fix the firewall.
 
 Review `ansible/group_vars/all.yml` (server type, location, SSH key path,
-k3s version), then commit and push — ArgoCD pulls from the remote repo.
+k3s version) before provisioning. Any change must be committed and pushed —
+ArgoCD pulls from the remote repo.
 
 > **No domain yet?** Use `<name>.<NODE_IP>.sslip.io` as hostnames and keep
 > `letsencrypt-staging` as the issuer (prod certs on sslip.io hit shared
