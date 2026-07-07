@@ -1,10 +1,14 @@
+# Wave 0: the argocd app's own Ingress (also wave 0) only reports Healthy
+# once an ingress controller assigns it an address — nginx must not wait
+# behind it. The ServiceMonitor race with prometheus-operator-crds (same
+# wave) is absorbed by the sync retry.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: ingress-nginx
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   project: default
   sources:

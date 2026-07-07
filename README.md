@@ -94,8 +94,8 @@ mise run bootstrap
 The script installs ArgoCD once, creates the `grafana-admin` secret
 (password is printed — **save it**), and applies `bootstrap/root-app.yaml`.
 From here on, git is the only interface: ArgoCD syncs the app-of-apps in
-`platform/app-of-apps/` in ordered waves (ArgoCD itself → sealed-secrets →
-cert-manager → ingress → monitoring → logging → projects).
+`platform/app-of-apps/` in ordered waves (ArgoCD itself + ingress +
+sealed-secrets → cert-manager → issuers → monitoring → logging → projects).
 
 Watch progress: `kubectl get applications -n argocd -w` or the UI
 (`https://argocd.k8s.bitulzero.ro`, user `admin`, password printed by the
