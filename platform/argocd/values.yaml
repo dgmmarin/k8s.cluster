@@ -53,7 +53,7 @@ server:
   ingress:
     enabled: true
     ingressClassName: nginx
-    hostname: argocd.k8s.example.com
+    hostname: argocd.k8s.bitulzero.ro
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
       nginx.ingress.kubernetes.io/force-ssl-redirect: "true"

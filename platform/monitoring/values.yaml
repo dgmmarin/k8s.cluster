@@ -110,10 +110,10 @@ grafana:
     enabled: true
     ingressClassName: nginx
     hosts:
-      - grafana.k8s.example.com
+      - grafana.k8s.bitulzero.ro
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-prod
     tls:
       - secretName: grafana-tls
         hosts:
-          - grafana.k8s.example.com
+          - grafana.k8s.bitulzero.ro

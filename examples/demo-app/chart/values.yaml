@@ -6,7 +6,7 @@ image:
 
 containerPort: 80
 
-host: demo.k8s.example.com
+host: demo.k8s.bitulzero.ro
 # Validate new hosts against letsencrypt-staging first (rate limits!),
 # then switch to letsencrypt-prod.
 clusterIssuer: letsencrypt-staging

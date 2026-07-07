@@ -18,7 +18,7 @@ the registry of product projects — each of which lives in its own git repo.
 │    └── ApplicationSet ──> one Application per file in projects/          │
 │                             each project repo holds its own Helm chart   │
 └──────────────────────────────────────────────────────────────────────────┘
-         ▲ *.k8s.example.com (wildcard A record → node IP)
+         ▲ *.k8s.bitulzero.ro (wildcard A record → node IP)
 ```
 
 ## Prerequisites
@@ -32,13 +32,11 @@ the registry of product projects — each of which lives in its own git repo.
 
 ## 1. Configure
 
-Repo URLs already point at `github.com/dgmmarin`. Replace the remaining
-placeholders (grep for them — nothing else needs editing):
+Repo URLs point at `github.com/dgmmarin` and the domain is `k8s.bitulzero.ro`
+(services: `argocd.`, `grafana.`, `demo.` + `.k8s.bitulzero.ro`). Replace the
+remaining placeholders (grep for them — nothing else needs editing):
 
 ```bash
-# Your base domain (one wildcard A record *.k8s.yourdomain.com → node IP)
-grep -rl 'k8s\.example\.com' --exclude-dir=.git . | xargs sed -i 's/k8s\.example\.com/k8s.yourdomain.com/g'
-
 # Let's Encrypt registration email
 grep -rl 'CHANGEME_EMAIL' --exclude-dir=.git . | xargs sed -i 's/CHANGEME_EMAIL/you@company.com/g'
 
@@ -67,7 +65,7 @@ The firewall only opens 80/443 publicly; SSH (22) and the Kubernetes API
 (6443) are restricted to your `admin_ip`. Everything reaches the cluster
 through ingress — NodePorts are unreachable by design.
 
-Now create the DNS record: `*.k8s.yourdomain.com  A  <node IP>`.
+Now create the DNS record: `*.k8s.bitulzero.ro  A  <node IP>`.
 
 ## 3. Bootstrap ArgoCD
 
@@ -83,7 +81,7 @@ From here on, git is the only interface: ArgoCD syncs the app-of-apps in
 cert-manager → ingress → monitoring → logging → projects).
 
 Watch progress: `kubectl get applications -n argocd -w` or the UI
-(`https://argocd.k8s.yourdomain.com`, user `admin`, password printed by the
+(`https://argocd.k8s.bitulzero.ro`, user `admin`, password printed by the
 script).
 
 **Immediately after `sealed-secrets` is Synced:**
@@ -98,11 +96,11 @@ cluster rebuild.
 ## 4. Verify end-to-end
 
 1. All Applications in the ArgoCD UI are **Synced / Healthy**.
-2. `https://argocd.k8s.yourdomain.com` and `https://grafana.k8s.yourdomain.com`
+2. `https://argocd.k8s.bitulzero.ro` and `https://grafana.k8s.bitulzero.ro`
    serve with valid Let's Encrypt certs.
 3. Grafana: dashboards show node/pod metrics; **Explore → Loki** →
    `{namespace="argocd"}` returns logs.
-4. The demo app answers: `curl https://demo.k8s.yourdomain.com` (once you
+4. The demo app answers: `curl https://demo.k8s.bitulzero.ro` (once you
    switch its `clusterIssuer` value to `letsencrypt-prod`, the cert is valid).
 5. `free -m` on the node shows ≥ 2.5 GB available.
 

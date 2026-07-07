@@ -17,7 +17,10 @@
       "Bash(chmod +x /home/danielm/Projects/diverse/gen.k8s.cluster/scripts/bootstrap-argocd.sh)",
       "Bash(git init *)",
       "Bash(git add *)",
-      "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Bootstrap single-node k3s cluster on Hetzner with ArgoCD GitOps *)"
+      "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Bootstrap single-node k3s cluster on Hetzner with ArgoCD GitOps *)",
+      "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Point GitOps repo URLs at dgmmarin/k8s.cluster *)",
+      "Bash(git remote *)",
+      "Bash(git push *)"
     ]
   }
 }
