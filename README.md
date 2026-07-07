@@ -1,4 +1,4 @@
-# gen.k8s.cluster
+# k8s.cluster
 
 Single-node **k3s** cluster on **Hetzner Cloud**, fully managed by **ArgoCD**
 (GitOps). This repo is the source of truth for everything: infrastructure
@@ -32,12 +32,10 @@ the registry of product projects — each of which lives in its own git repo.
 
 ## 1. Configure
 
-Replace the placeholders (grep for them — nothing else needs editing):
+Repo URLs already point at `github.com/dgmmarin`. Replace the remaining
+placeholders (grep for them — nothing else needs editing):
 
 ```bash
-# Your GitHub org or username (repo URLs in ArgoCD manifests)
-grep -rl 'CHANGEME_ORG' --exclude-dir=.git . | xargs sed -i 's/CHANGEME_ORG/your-org/g'
-
 # Your base domain (one wildcard A record *.k8s.yourdomain.com → node IP)
 grep -rl 'k8s\.example\.com' --exclude-dir=.git . | xargs sed -i 's/k8s\.example\.com/k8s.yourdomain.com/g'
 

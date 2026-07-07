@@ -5,6 +5,6 @@
 #
 # NOTE: 'srcPath' instead of 'path' — the git files generator reserves .path.
 name: demo-app
-repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+repoURL: https://github.com/dgmmarin/k8s.cluster.git
 srcPath: examples/demo-app/chart
 targetRevision: main

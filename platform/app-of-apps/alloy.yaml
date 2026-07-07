@@ -16,7 +16,7 @@ spec:
         releaseName: alloy
         valueFiles:
           - $values/platform/alloy/values.yaml
-    - repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+    - repoURL: https://github.com/dgmmarin/k8s.cluster.git
       targetRevision: main
       ref: values
   destination:

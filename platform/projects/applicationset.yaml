@@ -11,7 +11,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+        repoURL: https://github.com/dgmmarin/k8s.cluster.git
         revision: main
         files:
           - path: "projects/*.yaml"

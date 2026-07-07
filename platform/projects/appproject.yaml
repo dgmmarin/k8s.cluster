@@ -10,7 +10,7 @@ metadata:
 spec:
   description: Product applications — one namespace per project
   sourceRepos:
-    - https://github.com/CHANGEME_ORG/*
+    - https://github.com/dgmmarin/*
   destinations:
     - server: https://kubernetes.default.svc
       namespace: "*"
