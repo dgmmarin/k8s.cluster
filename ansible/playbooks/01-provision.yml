@@ -6,13 +6,29 @@
   vars_files:
     - ../group_vars/all.yml
   tasks:
+    - name: Detect current public IP (ADMIN_IP not set)
+      ansible.builtin.uri:
+        url: https://api.ipify.org
+        return_content: true
+      register: public_ip_lookup
+      when: admin_ip | length == 0
+      tags: [firewall]
+
+    - name: Resolve effective admin IP
+      ansible.builtin.set_fact:
+        effective_admin_ip: >-
+          {{ admin_ip if admin_ip | length > 0
+             else public_ip_lookup.content | trim }}
+      tags: [firewall]
+
     - name: Ensure SSH key exists in Hetzner
       hetzner.hcloud.ssh_key:
         name: "{{ hcloud_ssh_key_name }}"
         public_key: "{{ lookup('file', ssh_public_key_file) }}"
         state: present
 
-    - name: Ensure firewall exists
+    # Re-runnable on its own when your dynamic IP changes: make firewall
+    - name: Ensure firewall exists (SSH/kube-api locked to admin IP)
       hetzner.hcloud.firewall:
         name: "{{ hcloud_firewall_name }}"
         rules:
@@ -20,12 +36,12 @@
             direction: in
             protocol: tcp
             port: "22"
-            source_ips: ["{{ admin_ip }}/32"]
+            source_ips: ["{{ effective_admin_ip }}/32"]
           - description: Kubernetes API (admin only)
             direction: in
             protocol: tcp
             port: "6443"
-            source_ips: ["{{ admin_ip }}/32"]
+            source_ips: ["{{ effective_admin_ip }}/32"]
           - description: HTTP
             direction: in
             protocol: tcp
@@ -41,6 +57,12 @@
             protocol: icmp
             source_ips: ["0.0.0.0/0", "::/0"]
         state: present
+      tags: [firewall]
+
+    - name: Show allowlisted admin IP
+      ansible.builtin.debug:
+        msg: "Firewall allows SSH/kube-api from {{ effective_admin_ip }} only."
+      tags: [firewall]
 
     - name: Ensure server exists and is running
       hetzner.hcloud.server:

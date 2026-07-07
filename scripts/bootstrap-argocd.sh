@@ -4,10 +4,18 @@
 # from git — this script is never needed again except for disaster recovery.
 #
 # Requirements: kubectl, helm, a reachable cluster (KUBECONFIG or ./kubeconfig).
-# Optional env vars:
+# Optional env vars (loaded from .env automatically):
 #   GITHUB_ORG + GITHUB_TOKEN  — create repo credentials for private GitHub repos
+#   GRAFANA_ADMIN_PASSWORD     — Grafana admin password (random if empty)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+if [[ -f .env ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
 
 export KUBECONFIG="${KUBECONFIG:-$PWD/kubeconfig}"
 
@@ -43,7 +51,7 @@ helm upgrade --install argocd argo/argo-cd \
 # not managed by ArgoCD, so it is never pruned.
 kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
 if ! kubectl -n monitoring get secret grafana-admin >/dev/null 2>&1; then
-  GRAFANA_PASSWORD="$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)"
+  GRAFANA_PASSWORD="${GRAFANA_ADMIN_PASSWORD:-$(openssl rand -base64 24 | tr -d '/+=' | head -c 24)}"
   kubectl -n monitoring create secret generic grafana-admin \
     --from-literal=admin-user=admin \
     --from-literal=admin-password="${GRAFANA_PASSWORD}"

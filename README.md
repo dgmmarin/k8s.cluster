@@ -32,19 +32,28 @@ the registry of product projects — each of which lives in its own git repo.
 
 ## 1. Configure
 
-Everything is pre-configured:
+All provisioning parameters come from environment variables loaded from a
+`.env` file (gitignored — the Makefile and scripts pick it up automatically):
+
+```bash
+cp .env.example .env
+$EDITOR .env          # set HCLOUD_TOKEN; everything else has sane defaults
+```
+
+`.env.example` documents every knob (server type, location, SSH key, k3s
+version, GitHub credentials...). Already baked into git (not env-able —
+ArgoCD renders what's committed, not your local environment):
 
 - Repo URLs → `github.com/dgmmarin/k8s.cluster`
 - Domain → `k8s.bitulzero.ro` (services: `argocd.`, `grafana.`, `demo.` …)
 - Let's Encrypt email → `daniel.marin@roweb.com`
   (in `platform/cluster-issuers/`)
-- `admin_ip` in `ansible/group_vars/all.yml` → your workstation's public IP.
-  **If your IP changes** (residential connection), SSH and kube-api become
-  unreachable — update `admin_ip` and re-run `make server` to fix the firewall.
 
-Review `ansible/group_vars/all.yml` (server type, location, SSH key path,
-k3s version) before provisioning. Any change must be committed and pushed —
-ArgoCD pulls from the remote repo.
+> **Dynamic IP?** Leave `ADMIN_IP` empty in `.env`. The playbook detects your
+> current public IP on every run and locks SSH/kube-api to it. When your IP
+> rotates and you're locked out, just run `make firewall` — it refreshes the
+> Hetzner firewall rules with your new IP (this talks to the Hetzner API, not
+> the node, so it always works).
 
 > **No domain yet?** Use `<name>.<NODE_IP>.sslip.io` as hostnames and keep
 > `letsencrypt-staging` as the issuer (prod certs on sslip.io hit shared
@@ -53,7 +62,6 @@ ArgoCD pulls from the remote repo.
 ## 2. Provision the server + k3s
 
 ```bash
-export HCLOUD_TOKEN=<your token>
 make deps        # ansible collections + hcloud python lib
 make provision   # server + firewall + hardening + k3s + ./kubeconfig
 export KUBECONFIG=$PWD/kubeconfig
@@ -69,8 +77,8 @@ Now create the DNS record: `*.k8s.bitulzero.ro  A  <node IP>`.
 ## 3. Bootstrap ArgoCD
 
 ```bash
-# GITHUB_ORG/GITHUB_TOKEN only needed if this repo is private:
-GITHUB_ORG=your-org GITHUB_TOKEN=ghp_xxx make bootstrap
+# GITHUB_ORG/GITHUB_TOKEN (in .env) only needed if this repo is private
+make bootstrap
 ```
 
 The script installs ArgoCD once, creates the `grafana-admin` secret
@@ -137,6 +145,7 @@ file and the app is pruned. Rules for project charts:
 | Upgrade ArgoCD | Same — bump chart version in `argocd.yaml` (keep `scripts/bootstrap-argocd.sh` in sync) |
 | Upgrade k3s | Bump `k3s_version` in `ansible/group_vars/all.yml`, run `make k3s` (brief API downtime; workloads keep running) |
 | OS patching | Automatic (unattended-upgrades); reboot manually during quiet hours if the kernel updates |
+| Dynamic IP rotated (SSH/kubectl locked out) | `make firewall` — re-allowlists your current public IP via the Hetzner API |
 | Refetch kubeconfig | `make kubeconfig` |
 | Grafana password | `kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-password}' \| base64 -d` |
 | Disk pressure check | Prometheus alert or `df -h /` on the node — Prometheus (10Gi) + Loki (15Gi) + images share the 160 GB disk |

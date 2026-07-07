@@ -1,22 +1,27 @@
 ---
+# All values are read from environment variables (see .env.example at the
+# repo root) with the defaults below. The Makefile exports .env automatically.
+#
+# Auth: HCLOUD_TOKEN env var (picked up natively by the hetzner.hcloud modules).
+
 # ── Hetzner Cloud ────────────────────────────────────────────────────────────
-# Auth: export HCLOUD_TOKEN=<api token> before running the playbooks.
-hcloud_server_name: k3s-1
-hcloud_server_type: cpx31 # 4 vCPU / 8 GB RAM / 160 GB disk (~€15/mo)
-hcloud_location: nbg1 # nbg1 | fsn1 | hel1
-hcloud_image: ubuntu-24.04
+hcloud_server_name: "{{ lookup('env', 'HCLOUD_SERVER_NAME') | default('k3s-1', true) }}"
+hcloud_server_type: "{{ lookup('env', 'HCLOUD_SERVER_TYPE') | default('cpx31', true) }}"
+hcloud_location: "{{ lookup('env', 'HCLOUD_LOCATION') | default('nbg1', true) }}"
+hcloud_image: "{{ lookup('env', 'HCLOUD_IMAGE') | default('ubuntu-24.04', true) }}"
 hcloud_firewall_name: k3s-firewall
 hcloud_ssh_key_name: k3s-admin
-ssh_public_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+ssh_public_key_file: "{{ lookup('env', 'SSH_PUBLIC_KEY_FILE') | default(lookup('env', 'HOME') ~ '/.ssh/id_ed25519.pub', true) }}"
 
-# Your workstation's public IP. SSH (22) and the Kubernetes API (6443)
-# are ONLY reachable from this address. Find yours: curl -4 ifconfig.me
-admin_ip: "79.118.192.248"
+# Allowlisted IP for SSH (22) and kube-api (6443). Empty = auto-detect the
+# current public IP at run time (dynamic-IP friendly: `make firewall`).
+admin_ip: "{{ lookup('env', 'ADMIN_IP') | default('', true) }}"
 
 # ── k3s ──────────────────────────────────────────────────────────────────────
-k3s_version: v1.36.2+k3s1
+k3s_version: "{{ lookup('env', 'K3S_VERSION') | default('v1.36.2+k3s1', true) }}"
 
 # ── DNS ──────────────────────────────────────────────────────────────────────
-# Base domain: every service is exposed as <name>.<domain>.
-# Create a wildcard A record (*.k8s.bitulzero.ro) pointing at the node IP.
-domain: k8s.bitulzero.ro
+# Base domain: every service is exposed as <name>.<domain> via a wildcard
+# A record. NOTE: only used for provisioning output — the actual hostnames
+# live in the GitOps values files (platform/*/values.yaml), committed in git.
+domain: "{{ lookup('env', 'DOMAIN') | default('k8s.bitulzero.ro', true) }}"

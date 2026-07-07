@@ -1,7 +1,12 @@
 SHELL := /bin/bash
+
+# Load .env (copy .env.example) and export everything to child processes.
+-include .env
+export
+
 export KUBECONFIG ?= $(CURDIR)/kubeconfig
 
-.PHONY: deps provision server k3s kubeconfig bootstrap backup-sealing-key
+.PHONY: deps provision server firewall k3s kubeconfig bootstrap backup-sealing-key
 
 ## Install local dependencies (Ansible collections + hcloud python lib)
 deps:
@@ -15,6 +20,10 @@ provision:
 ## Only create/update the Hetzner server + firewall
 server:
 	cd ansible && ansible-playbook playbooks/01-provision.yml
+
+## Refresh firewall rules with the current public IP (dynamic IP changed)
+firewall:
+	cd ansible && ansible-playbook playbooks/01-provision.yml --tags firewall
 
 ## Only (re)configure the node and install/upgrade k3s
 k3s:
