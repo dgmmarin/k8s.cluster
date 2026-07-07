@@ -17,6 +17,6 @@ controller:
   resources:
     requests:
       cpu: 100m
-      memory: 128Mi
+      memory: 192Mi
     limits:
-      memory: 320Mi
+      memory: 512Mi # 320Mi got OOMKilled with real ingresses + ACME solvers
