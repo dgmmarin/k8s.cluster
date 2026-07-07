@@ -121,6 +121,33 @@ cluster rebuild.
    switch its `clusterIssuer` value to `letsencrypt-prod`, the cert is valid).
 5. `free -m` on the node shows ≥ 2.5 GB available.
 
+## Run it locally (k3d)
+
+The full stack runs locally in Docker via [k3d](https://k3d.io) — same k3s,
+same bootstrap, same GitOps sync from this repo's `main` branch. No Hetzner
+token, no DNS needed:
+
+```bash
+mise run local-up          # k3s-in-docker, ports 80/443 on localhost
+mise run local-bootstrap   # identical bootstrap; passwords printed
+mise x -- kubectl --kubeconfig kubeconfig.local get applications -n argocd -w
+```
+
+To use the ingress hostnames, point them at localhost once:
+
+```bash
+echo '127.0.0.1 argocd.k8s.bitulzero.ro grafana.k8s.bitulzero.ro demo.k8s.bitulzero.ro' | sudo tee -a /etc/hosts
+```
+
+Local caveats:
+
+- **TLS**: Let's Encrypt can't reach a local cluster, so certificates stay
+  Pending and ingress serves a self-signed cert — `curl -k` or click through
+  the browser warning. Everything else behaves exactly like production.
+- **GitOps is still GitOps**: ArgoCD syncs from GitHub `main`, so manifest
+  changes must be pushed to show up locally too.
+- Teardown: `mise run local-down` (removes the cluster and kubeconfig.local).
+
 ## Adding a project
 
 A project repo needs a Helm chart (or kustomize/plain manifests) — copy

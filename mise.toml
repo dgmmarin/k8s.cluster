@@ -13,6 +13,7 @@ python = "3.13"
 kubectl = "1.36" # matches the k3s minor version
 helm = "3"
 kubeseal = "0.38" # matches the sealed-secrets controller appVersion
+k3d = "5" # local k3s-in-docker cluster (mise run local-up)
 
 [env]
 # All provisioning parameters live in .env (copy .env.example).
@@ -61,6 +62,27 @@ run = "ansible-playbook playbooks/02-k3s.yml --tags kubeconfig"
 [tasks.bootstrap]
 description = "One-time: install ArgoCD and apply the root app (GitOps takes over)"
 run = "./scripts/bootstrap-argocd.sh"
+
+[tasks.local-up]
+description = "Create a local k3d cluster mirroring production (ports 80/443 on localhost)"
+run = [
+  "k3d cluster create --config k3d/config.yaml",
+  "k3d kubeconfig get k8s-local > kubeconfig.local",
+  "chmod 600 kubeconfig.local",
+  "echo 'Local cluster up. Next: mise run local-bootstrap'",
+]
+
+[tasks.local-bootstrap]
+description = "Bootstrap ArgoCD on the local k3d cluster (same script as production)"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = "./scripts/bootstrap-argocd.sh"
+
+[tasks.local-down]
+description = "Delete the local k3d cluster (removes everything)"
+run = [
+  "k3d cluster delete k8s-local",
+  "rm -f kubeconfig.local",
+]
 
 [tasks.backup-sealing-key]
 description = "Save the sealed-secrets master key (store it in a password manager!)"
