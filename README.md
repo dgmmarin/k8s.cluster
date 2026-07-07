@@ -23,8 +23,17 @@ the registry of product projects — each of which lives in its own git repo.
 
 ## Prerequisites
 
-- CLI tools: `ansible` (2.15+), `kubectl`, `helm`, `kubeseal`, `python3`
-- A Hetzner Cloud project + API token (`export HCLOUD_TOKEN=...`)
+- [mise](https://mise.jdx.dev) — installs and pins everything else
+  (`kubectl`, `helm`, `kubeseal`, Python + Ansible in a project venv):
+
+  ```bash
+  mise trust && mise install   # toolchain
+  mise run deps                # ansible + hcloud lib + collections
+  ```
+
+  Tools are on PATH inside `mise run` tasks and mise-activated shells;
+  otherwise prefix with `mise x --` (e.g. `mise x -- kubectl get nodes`).
+- A Hetzner Cloud project + API token (goes into `.env`)
 - A GitHub repo for this code (private is fine) and, if private, a
   fine-grained PAT with read access to your org's repos
 - A domain where you can create one wildcard A record
@@ -33,7 +42,7 @@ the registry of product projects — each of which lives in its own git repo.
 ## 1. Configure
 
 All provisioning parameters come from environment variables loaded from a
-`.env` file (gitignored — the Makefile and scripts pick it up automatically):
+`.env` file (gitignored — mise loads it for every task automatically):
 
 ```bash
 cp .env.example .env
@@ -51,7 +60,7 @@ ArgoCD renders what's committed, not your local environment):
 
 > **Dynamic IP?** Leave `ADMIN_IP` empty in `.env`. The playbook detects your
 > current public IP on every run and locks SSH/kube-api to it. When your IP
-> rotates and you're locked out, just run `make firewall` — it refreshes the
+> rotates and you're locked out, just run `mise run firewall` — it refreshes the
 > Hetzner firewall rules with your new IP (this talks to the Hetzner API, not
 > the node, so it always works).
 
@@ -62,11 +71,12 @@ ArgoCD renders what's committed, not your local environment):
 ## 2. Provision the server + k3s
 
 ```bash
-make deps        # ansible collections + hcloud python lib
-make provision   # server + firewall + hardening + k3s + ./kubeconfig
-export KUBECONFIG=$PWD/kubeconfig
-kubectl get nodes   # → one node, STATUS Ready
+mise run provision          # server + firewall + hardening + k3s + ./kubeconfig
+mise x -- kubectl get nodes # → one node, STATUS Ready
 ```
+
+(`KUBECONFIG` is set to `./kubeconfig` by mise inside tasks and activated
+shells — no exporting needed.)
 
 The firewall only opens 80/443 publicly; SSH (22) and the Kubernetes API
 (6443) are restricted to your `admin_ip`. Everything reaches the cluster
@@ -78,7 +88,7 @@ Now create the DNS record: `*.k8s.bitulzero.ro  A  <node IP>`.
 
 ```bash
 # GITHUB_ORG/GITHUB_TOKEN (in .env) only needed if this repo is private
-make bootstrap
+mise run bootstrap
 ```
 
 The script installs ArgoCD once, creates the `grafana-admin` secret
@@ -94,7 +104,7 @@ script).
 **Immediately after `sealed-secrets` is Synced:**
 
 ```bash
-make backup-sealing-key   # store master.key in a password manager, then delete it
+mise run backup-sealing-key   # store master.key in a password manager, then delete it
 ```
 
 Without that key, every committed SealedSecret is unrecoverable after a
@@ -143,10 +153,10 @@ file and the app is pruned. Rules for project charts:
 |---|---|
 | Upgrade a platform component | Bump `targetRevision` in its `platform/app-of-apps/*.yaml`, adjust values, push |
 | Upgrade ArgoCD | Same — bump chart version in `argocd.yaml` (keep `scripts/bootstrap-argocd.sh` in sync) |
-| Upgrade k3s | Bump `k3s_version` in `ansible/group_vars/all.yml`, run `make k3s` (brief API downtime; workloads keep running) |
+| Upgrade k3s | Bump `k3s_version` in `ansible/group_vars/all.yml`, run `mise run k3s` (brief API downtime; workloads keep running) |
 | OS patching | Automatic (unattended-upgrades); reboot manually during quiet hours if the kernel updates |
-| Dynamic IP rotated (SSH/kubectl locked out) | `make firewall` — re-allowlists your current public IP via the Hetzner API |
-| Refetch kubeconfig | `make kubeconfig` |
+| Dynamic IP rotated (SSH/kubectl locked out) | `mise run firewall` — re-allowlists your current public IP via the Hetzner API |
+| Refetch kubeconfig | `mise run kubeconfig` |
 | Grafana password | `kubectl get secret -n monitoring grafana-admin -o jsonpath='{.data.admin-password}' \| base64 -d` |
 | Disk pressure check | Prometheus alert or `df -h /` on the node — Prometheus (10Gi) + Loki (15Gi) + images share the 160 GB disk |
 
@@ -155,11 +165,11 @@ file and the app is pruned. Rules for project charts:
 Primary strategy: **rebuild from git** (~30 min). Single-node k3s stores
 state in SQLite, not etcd — don't rely on etcd snapshots.
 
-1. `make provision` (new server)
+1. `mise run provision` (new server)
 2. Restore the sealed-secrets key **before** bootstrapping apps:
    `kubectl create ns kube-system; kubectl apply -f master.key` (from your
    password manager)
-3. `make bootstrap`, update the DNS record to the new IP
+3. `mise run bootstrap`, update the DNS record to the new IP
 
 Persistent volume data (Grafana history, Loki logs, project PVCs) is
 best-effort: `local-path` volumes die with the disk. Optionally schedule
@@ -179,8 +189,10 @@ storage, not on this node.
 ## Repo map
 
 ```
-ansible/                  server + firewall + k3s provisioning (make provision)
-scripts/bootstrap-argocd.sh   one-time ArgoCD install (make bootstrap)
+mise.toml                 pinned toolchain + all tasks (mise tasks to list)
+.env.example              every provisioning parameter, documented
+ansible/                  server + firewall + k3s provisioning (mise run provision)
+scripts/bootstrap-argocd.sh   one-time ArgoCD install (mise run bootstrap)
 bootstrap/root-app.yaml   the only hand-applied manifest
 platform/app-of-apps/     one ArgoCD Application per platform component
 platform/<component>/     Helm values / manifests for each component

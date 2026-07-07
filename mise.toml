@@ -1,0 +1,70 @@
+# Local toolchain + deployment tasks — https://mise.jdx.dev
+#
+#   mise install      # install pinned tools (kubectl, helm, kubeseal, python)
+#   mise run deps     # ansible + hcloud lib + collections into ./.venv
+#   mise run provision
+#   mise run bootstrap
+#
+# Tools are only on PATH inside `mise run` tasks, `mise x -- <cmd>`, or a
+# shell with mise activated.
+
+[tools]
+python = "3.13"
+kubectl = "1.36" # matches the k3s minor version
+helm = "3"
+kubeseal = "0.38" # matches the sealed-secrets controller appVersion
+
+[env]
+# All provisioning parameters live in .env (copy .env.example).
+_.file = ".env"
+# Project-local venv for ansible + the hcloud python library.
+_.python.venv = { path = ".venv", create = true }
+KUBECONFIG = "{{config_root}}/kubeconfig"
+
+[tasks.deps]
+description = "Install Ansible + hcloud lib into the project venv, plus galaxy collections"
+run = [
+  "python -m pip install --quiet --upgrade ansible hcloud",
+  "ansible-galaxy collection install -r ansible/requirements.yml",
+]
+
+[tasks.provision]
+description = "Full run: Hetzner server + firewall + OS hardening + k3s + kubeconfig"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/site.yml"
+
+[tasks.server]
+description = "Only create/update the Hetzner server + firewall"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/01-provision.yml"
+
+[tasks.firewall]
+description = "Re-allowlist your current public IP (run after a dynamic IP rotation)"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/01-provision.yml --tags firewall"
+
+[tasks.k3s]
+description = "(Re)configure the node and install/upgrade k3s"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/02-k3s.yml"
+
+[tasks.kubeconfig]
+description = "Re-fetch the kubeconfig from the node"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/02-k3s.yml --tags kubeconfig"
+
+[tasks.bootstrap]
+description = "One-time: install ArgoCD and apply the root app (GitOps takes over)"
+run = "./scripts/bootstrap-argocd.sh"
+
+[tasks.backup-sealing-key]
+description = "Save the sealed-secrets master key (store it in a password manager!)"
+run = [
+  "kubectl get secret -n kube-system -l sealedsecrets.bitnami.com/sealed-secrets-key -o yaml > master.key",
+  "echo 'master.key written — store it in a password manager, then delete the file.'",
+]

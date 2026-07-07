@@ -22,5 +22,5 @@ git-managed instead of the imperative ones the bootstrap script creates):
 | `grafana-admin` | `monitoring` | keys `admin-user`, `admin-password` |
 | `repo-creds-github` | `argocd` | keys `type=git`, `url=https://github.com/<org>`, `username`, `password` (PAT) + label `argocd.argoproj.io/secret-type: repo-creds` |
 
-**Back up the sealing key** (`make backup-sealing-key`) — without it, all
+**Back up the sealing key** (`mise run backup-sealing-key`) — without it, all
 committed SealedSecrets are unrecoverable after a cluster rebuild.

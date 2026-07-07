@@ -20,7 +20,22 @@
       "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Bootstrap single-node k3s cluster on Hetzner with ArgoCD GitOps *)",
       "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Point GitOps repo URLs at dgmmarin/k8s.cluster *)",
       "Bash(git remote *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(bash -n scripts/bootstrap-argocd.sh)",
+      "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Move all provisioning parameters to env vars with .env support *)",
+      "Bash(mise version *)",
+      "Bash(mise registry *)",
+      "Bash(mise trust *)",
+      "Bash(mise install *)",
+      "Bash(mise tasks *)",
+      "Bash(mise ls *)",
+      "Bash(mise x *)",
+      "Bash(mise run *)",
+      "Bash(sed -i -e 's/`make firewall`/`mise run firewall`/g' -e 's/`make k3s`/`mise run k3s`/g' -e 's/`make kubeconfig`/`mise run kubeconfig`/g' -e 's/`make provision`/`mise run provision`/g' -e 's/`make bootstrap`/`mise run bootstrap`/g' -e 's/`make backup-sealing-key`/`mise run backup-sealing-key`/g' -e 's/\\(make provision\\)/\\(mise run provision\\)/' -e 's/\\(make bootstrap\\)/\\(mise run bootstrap\\)/' README.md platform/secrets/README.md .env.example)",
+      "Bash(sed -i 's/^echo \"    make backup-sealing-key\"/echo \"    mise run backup-sealing-key\"/' scripts/bootstrap-argocd.sh)",
+      "Bash(sed -i 's/the Makefile and scripts load it automatically/mise loads it automatically \\(see mise.toml\\)/' .env.example)",
+      "Bash(sed -i 's/with a dynamic IP just run `mise run firewall` whenever your IP changes./with a dynamic IP just run `mise run firewall` whenever your IP changes./' .env.example)",
+      "Bash(git -c user.email=daniel.marin@roweb.com -c 'user.name=Daniel Marin' commit -q -m 'Replace Makefile with mise: pinned toolchain + tasks *)"
     ]
   }
 }

@@ -70,4 +70,4 @@ echo "==> UI: kubectl port-forward -n argocd svc/argocd-server 8080:80"
 echo "    (or https://argocd.<your-domain> once DNS + cert-manager are up)"
 echo
 echo "==> IMPORTANT next step after sealed-secrets is Synced:"
-echo "    make backup-sealing-key"
+echo "    mise run backup-sealing-key"
