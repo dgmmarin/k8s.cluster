@@ -1,0 +1,11 @@
+# k3s server configuration — managed by Ansible, do not edit on the node.
+# Traefik is disabled because ingress-nginx is deployed via ArgoCD.
+# servicelb, local-path-provisioner, coredns and metrics-server stay enabled.
+disable:
+  - traefik
+tls-san:
+  - "{{ ansible_host }}"
+secrets-encryption: true
+kubelet-arg:
+  - "eviction-hard=memory.available<200Mi,nodefs.available<10%"
+  - "system-reserved=cpu=250m,memory=300Mi"

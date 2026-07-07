@@ -1,0 +1,119 @@
+# kube-prometheus-stack tuned for a single-node k3s cluster (~8 GB RAM).
+crds:
+  enabled: false # installed by the prometheus-operator-crds app (wave 0)
+
+# k3s embeds the control plane in one process — these components are not
+# scrapable as separate targets. Disable them (and their alert rules) or
+# Prometheus shows permanent TargetDown noise.
+kubeEtcd:
+  enabled: false # single-node k3s uses SQLite (kine), not etcd
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
+  enabled: false
+
+defaultRules:
+  rules:
+    etcd: false
+    kubeControllerManager: false
+    kubeSchedulerAlerting: false
+    kubeSchedulerRecording: false
+    kubeProxy: false
+
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      memory: 192Mi
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    retentionSize: 6GB
+    # Pick up ServiceMonitors/PodMonitors/Rules from ALL namespaces and
+    # releases (ingress-nginx, cert-manager, loki, project apps...).
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: [ReadWriteOnce]
+          resources:
+            requests:
+              storage: 10Gi
+    resources:
+      requests:
+        cpu: 250m
+        memory: 768Mi
+      limits:
+        memory: 1536Mi
+
+alertmanager:
+  enabled: true
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 48Mi
+      limits:
+        memory: 96Mi
+
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      memory: 64Mi
+
+grafana:
+  enabled: true
+  admin:
+    existingSecret: grafana-admin # created by scripts/bootstrap-argocd.sh
+    userKey: admin-user
+    passwordKey: admin-password
+  persistence:
+    enabled: true
+    storageClassName: local-path
+    size: 2Gi
+  # local-path PVCs are ReadWriteOnce: RollingUpdate would deadlock on the
+  # volume during upgrades, so recreate the pod instead.
+  deploymentStrategy:
+    type: Recreate
+  resources:
+    requests:
+      cpu: 50m
+      memory: 160Mi
+    limits:
+      memory: 320Mi
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki.monitoring.svc.cluster.local:3100
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.k8s.example.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.k8s.example.com

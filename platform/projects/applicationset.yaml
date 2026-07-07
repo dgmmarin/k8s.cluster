@@ -1,0 +1,45 @@
+# Turns every projects/*.yaml file in this repo into an ArgoCD Application.
+# Onboarding a new project = committing one small file — see projects/ and
+# the "Adding a project" section of the README.
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: projects
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - git:
+        repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+        revision: main
+        files:
+          - path: "projects/*.yaml"
+  template:
+    metadata:
+      name: "{{ .name }}"
+      labels:
+        app.kubernetes.io/managed-by: projects-appset
+    spec:
+      project: projects
+      source:
+        repoURL: "{{ .repoURL }}"
+        # 'srcPath' (not 'path') because the git files generator reserves
+        # the .path parameter for the matched file's own location.
+        path: "{{ .srcPath }}"
+        targetRevision: "{{ .targetRevision }}"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: "{{ .name }}"
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 30s
+            factor: 2
+            maxDuration: 5m

@@ -1,0 +1,10 @@
+# Example project registration. This is ALL it takes to deploy a project:
+# one file naming the repo, the path to its chart/manifests, and the branch.
+# The ApplicationSet (platform/projects/applicationset.yaml) turns it into
+# an ArgoCD Application deployed to the namespace "demo-app".
+#
+# NOTE: 'srcPath' instead of 'path' — the git files generator reserves .path.
+name: demo-app
+repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+srcPath: examples/demo-app/chart
+targetRevision: main

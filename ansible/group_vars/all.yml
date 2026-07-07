@@ -1,0 +1,22 @@
+---
+# ── Hetzner Cloud ────────────────────────────────────────────────────────────
+# Auth: export HCLOUD_TOKEN=<api token> before running the playbooks.
+hcloud_server_name: k3s-1
+hcloud_server_type: cpx31 # 4 vCPU / 8 GB RAM / 160 GB disk (~€15/mo)
+hcloud_location: nbg1 # nbg1 | fsn1 | hel1
+hcloud_image: ubuntu-24.04
+hcloud_firewall_name: k3s-firewall
+hcloud_ssh_key_name: k3s-admin
+ssh_public_key_file: "{{ lookup('env', 'HOME') }}/.ssh/id_ed25519.pub"
+
+# Your workstation's public IP. SSH (22) and the Kubernetes API (6443)
+# are ONLY reachable from this address. Find yours: curl -4 ifconfig.me
+admin_ip: "CHANGEME_ADMIN_IP"
+
+# ── k3s ──────────────────────────────────────────────────────────────────────
+k3s_version: v1.36.2+k3s1
+
+# ── DNS ──────────────────────────────────────────────────────────────────────
+# Base domain: every service is exposed as <name>.<domain>.
+# Create a wildcard A record (*.k8s.example.com) pointing at the node IP.
+domain: k8s.example.com

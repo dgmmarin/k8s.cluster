@@ -1,0 +1,28 @@
+# Deploys the AppProject + ApplicationSet that turn projects/*.yaml files
+# into ArgoCD Applications. Last wave: the platform must be ready first.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: projects
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+    targetRevision: main
+    path: platform/projects
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

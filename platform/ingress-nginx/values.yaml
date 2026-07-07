@@ -1,0 +1,22 @@
+controller:
+  replicaCount: 1
+  ingressClassResource:
+    default: true # Ingresses without ingressClassName still work
+  # type LoadBalancer is fulfilled by k3s's built-in klipper servicelb:
+  # it binds hostPorts 80/443 on the node and the Service gets the node's
+  # public IP — no cloud load balancer needed on a single node.
+  service:
+    type: LoadBalancer
+  config:
+    # Single node behind no proxy: do not trust client-supplied X-Forwarded-*
+    use-forwarded-headers: "false"
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true # CRD provided by the prometheus-operator-crds app (wave 0)
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 320Mi

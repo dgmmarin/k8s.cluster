@@ -1,0 +1,11 @@
+# Cluster credentials — never commit
+kubeconfig
+master.key
+*.key
+
+# Ansible
+ansible/inventory/hosts.yml
+*.retry
+
+# Local env
+.env

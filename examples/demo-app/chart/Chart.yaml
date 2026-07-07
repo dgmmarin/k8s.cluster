@@ -1,0 +1,8 @@
+apiVersion: v2
+name: demo-app
+description: >-
+  Example project chart. Copy this into your project repo (e.g. deploy/chart),
+  adjust values.yaml, then register the project with one file in projects/.
+type: application
+version: 0.1.0
+appVersion: "1.0"

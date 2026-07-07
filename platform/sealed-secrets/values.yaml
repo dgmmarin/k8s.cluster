@@ -1,0 +1,9 @@
+# Name expected by the kubeseal CLI defaults.
+fullnameOverride: sealed-secrets-controller
+
+resources:
+  requests:
+    cpu: 30m
+    memory: 64Mi
+  limits:
+    memory: 128Mi

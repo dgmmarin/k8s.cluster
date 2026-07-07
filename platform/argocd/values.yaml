@@ -1,0 +1,76 @@
+# ArgoCD values — used by both the bootstrap helm install and the
+# self-managing Application (platform/app-of-apps/argocd.yaml).
+dex:
+  enabled: false # local users only; enable + configure SSO later if needed
+notifications:
+  enabled: false
+
+configs:
+  params:
+    server.insecure: true # TLS terminates at ingress-nginx
+  cm:
+    timeout.reconciliation: 300s # halve reconcile churn on a small node
+    # Health check for Application CRs: required so app-of-apps sync waves
+    # wait for child apps to become healthy before starting the next wave.
+    resource.customizations.health.argoproj.io_Application: |
+      hs = {}
+      hs.status = "Progressing"
+      hs.message = ""
+      if obj.status ~= nil then
+        if obj.status.health ~= nil then
+          hs.status = obj.status.health.status
+          if obj.status.health.message ~= nil then
+            hs.message = obj.status.health.message
+          end
+        end
+      end
+      return hs
+
+controller:
+  resources:
+    requests:
+      cpu: 250m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+
+repoServer:
+  # 512Mi limit is deliberate headroom: rendering kube-prometheus-stack is heavy.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 512Mi
+
+server:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: argocd.k8s.example.com
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    tls: true
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      memory: 128Mi

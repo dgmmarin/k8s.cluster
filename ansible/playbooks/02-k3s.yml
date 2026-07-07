@@ -1,0 +1,11 @@
+---
+- name: Configure node and install k3s
+  hosts: k3s
+  gather_facts: true
+  vars_files:
+    - ../group_vars/all.yml
+  roles:
+    - role: base
+      tags: [base]
+    - role: k3s
+      tags: [k3s, kubeconfig]

@@ -1,0 +1,83 @@
+---
+- name: Provision Hetzner Cloud server for k3s
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Ensure SSH key exists in Hetzner
+      hetzner.hcloud.ssh_key:
+        name: "{{ hcloud_ssh_key_name }}"
+        public_key: "{{ lookup('file', ssh_public_key_file) }}"
+        state: present
+
+    - name: Ensure firewall exists
+      hetzner.hcloud.firewall:
+        name: "{{ hcloud_firewall_name }}"
+        rules:
+          - description: SSH (admin only)
+            direction: in
+            protocol: tcp
+            port: "22"
+            source_ips: ["{{ admin_ip }}/32"]
+          - description: Kubernetes API (admin only)
+            direction: in
+            protocol: tcp
+            port: "6443"
+            source_ips: ["{{ admin_ip }}/32"]
+          - description: HTTP
+            direction: in
+            protocol: tcp
+            port: "80"
+            source_ips: ["0.0.0.0/0", "::/0"]
+          - description: HTTPS
+            direction: in
+            protocol: tcp
+            port: "443"
+            source_ips: ["0.0.0.0/0", "::/0"]
+          - description: ICMP
+            direction: in
+            protocol: icmp
+            source_ips: ["0.0.0.0/0", "::/0"]
+        state: present
+
+    - name: Ensure server exists and is running
+      hetzner.hcloud.server:
+        name: "{{ hcloud_server_name }}"
+        server_type: "{{ hcloud_server_type }}"
+        image: "{{ hcloud_image }}"
+        location: "{{ hcloud_location }}"
+        ssh_keys: ["{{ hcloud_ssh_key_name }}"]
+        firewalls: ["{{ hcloud_firewall_name }}"]
+        enable_ipv4: true
+        enable_ipv6: true
+        state: started
+      register: server
+
+    - name: Write inventory file
+      ansible.builtin.template:
+        src: ../templates/hosts.yml.j2
+        dest: ../inventory/hosts.yml
+        mode: "0644"
+      vars:
+        server_ip: "{{ server.hcloud_server.ipv4_address }}"
+
+    - name: Add server to in-memory inventory (for same-run continuation)
+      ansible.builtin.add_host:
+        name: k3s-node
+        groups: k3s
+        ansible_host: "{{ server.hcloud_server.ipv4_address }}"
+        ansible_user: root
+
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for:
+        host: "{{ server.hcloud_server.ipv4_address }}"
+        port: 22
+        timeout: 300
+
+    - name: Show server IP
+      ansible.builtin.debug:
+        msg: >-
+          Server {{ hcloud_server_name }} is up at {{ server.hcloud_server.ipv4_address }}.
+          Point *.{{ domain }} (wildcard A record) at this IP.

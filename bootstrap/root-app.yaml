@@ -1,0 +1,29 @@
+# The ONLY manifest ever applied by hand (scripts/bootstrap-argocd.sh).
+# It points ArgoCD at platform/app-of-apps/, which contains one Application
+# per platform component — everything else is managed from git.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/CHANGEME_ORG/gen.k8s.cluster.git
+    targetRevision: main
+    path: platform/app-of-apps
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m
