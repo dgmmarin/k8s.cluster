@@ -84,6 +84,53 @@ run = [
   "rm -f kubeconfig.local",
 ]
 
+[tasks.local-forward]
+description = "Port-forward everything on the local cluster: ArgoCD :8080, demo-app :8081, Grafana :3000, Prometheus :9090, Alertmanager :9093, Loki :3100"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = """
+#!/usr/bin/env bash
+set -uo pipefail
+trap 'kill $(jobs -p) 2>/dev/null' EXIT
+
+kubectl port-forward -n argocd     svc/argocd-server                            8080:80   >/dev/null &
+kubectl port-forward -n demo-app   svc/demo-app                                 8081:80   >/dev/null &
+kubectl port-forward -n monitoring svc/monitoring-grafana                       3000:80   >/dev/null &
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus    9090:9090 >/dev/null &
+kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-alertmanager  9093:9093 >/dev/null &
+kubectl port-forward -n monitoring svc/loki                                     3100:3100 >/dev/null &
+
+cat <<'EOF'
+Forwarding (Ctrl-C stops all):
+  ArgoCD        http://localhost:8080   admin / kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d
+  demo-app      http://localhost:8081
+  Grafana       http://localhost:3000   admin / kubectl -n monitoring get secret grafana-admin -o jsonpath='{.data.admin-password}' | base64 -d
+  Prometheus    http://localhost:9090
+  Alertmanager  http://localhost:9093
+  Loki API      http://localhost:3100
+EOF
+wait
+"""
+
+[tasks.local-forward-argocd]
+description = "Port-forward only the ArgoCD UI to http://localhost:8080 (local cluster)"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = "kubectl port-forward -n argocd svc/argocd-server 8080:80"
+
+[tasks.local-forward-demo-app]
+description = "Port-forward only demo-app to http://localhost:8081 (local cluster)"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = "kubectl port-forward -n demo-app svc/demo-app 8081:80"
+
+[tasks.local-forward-grafana]
+description = "Port-forward only Grafana to http://localhost:3000 (local cluster)"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = "kubectl port-forward -n monitoring svc/monitoring-grafana 3000:80"
+
+[tasks.local-forward-prometheus]
+description = "Port-forward only Prometheus to http://localhost:9090 (local cluster)"
+env = { KUBECONFIG = "{{config_root}}/kubeconfig.local" }
+run = "kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 9090:9090"
+
 [tasks.backup-sealing-key]
 description = "Save the sealed-secrets master key (store it in a password manager!)"
 run = [
