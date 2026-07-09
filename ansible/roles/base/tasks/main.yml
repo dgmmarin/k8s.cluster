@@ -42,3 +42,55 @@
       fs.inotify.max_user_watches = 524288
     mode: "0644"
   notify: Reload sysctl
+
+# Host firewall — only for bring-your-own VPS providers (e.g. netcup) that
+# have no cloud firewall API. On Hetzner this stays off (host_firewall is
+# false) because the hetzner.hcloud.firewall in 01-provision.yml covers it.
+# Allow rules are added BEFORE enabling ufw so the live SSH session survives.
+- name: Configure host firewall (ufw)
+  when: host_firewall | default(false) | bool
+  tags: [firewall]
+  block:
+    - name: Install ufw
+      ansible.builtin.apt:
+        name: ufw
+        state: present
+
+    - name: Require an admin IP for the firewall
+      ansible.builtin.assert:
+        that: admin_ip | default('') | length > 0
+        fail_msg: >-
+          host_firewall is on but admin_ip is empty. Set ADMIN_IP in .env
+          or let the netcup playbook auto-detect your current public IP.
+
+    - name: Allow SSH from the admin IP only
+      community.general.ufw:
+        rule: allow
+        port: "22"
+        proto: tcp
+        from_ip: "{{ admin_ip }}"
+
+    - name: Allow the Kubernetes API from the admin IP only
+      community.general.ufw:
+        rule: allow
+        port: "6443"
+        proto: tcp
+        from_ip: "{{ admin_ip }}"
+
+    - name: Allow HTTP from anywhere
+      community.general.ufw:
+        rule: allow
+        port: "80"
+        proto: tcp
+
+    - name: Allow HTTPS from anywhere
+      community.general.ufw:
+        rule: allow
+        port: "443"
+        proto: tcp
+
+    - name: Enable ufw with default-deny incoming
+      community.general.ufw:
+        state: enabled
+        policy: deny
+        direction: incoming

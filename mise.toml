@@ -47,6 +47,18 @@ depends = ["deps"]
 dir = "ansible"
 run = "ansible-playbook playbooks/01-provision.yml --tags firewall"
 
+[tasks.provision-netcup]
+description = "BYO VPS (netcup): inventory + host firewall (ufw) + OS hardening + k3s + kubeconfig. Set SERVER_IP in .env."
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/site-netcup.yml"
+
+[tasks.netcup-firewall]
+description = "Re-apply the host (ufw) firewall with your current admin IP (BYO VPS — the netcup equivalent of `firewall`)"
+depends = ["deps"]
+dir = "ansible"
+run = "ansible-playbook playbooks/site-netcup.yml --tags firewall"
+
 [tasks.k3s]
 description = "(Re)configure the node and install/upgrade k3s"
 depends = ["deps"]

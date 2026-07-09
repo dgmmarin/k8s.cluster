@@ -1,0 +1,6 @@
+---
+# Bring-your-own VPS (netcup) equivalent of site.yml: no cloud provisioning,
+# just prepare the inventory + admin IP, then harden + install k3s (which also
+# brings up the host firewall via the base role).
+- import_playbook: 01-provision-netcup.yml
+- import_playbook: 02-k3s.yml

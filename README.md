@@ -33,7 +33,9 @@ the registry of product projects — each of which lives in its own git repo.
 
   Tools are on PATH inside `mise run` tasks and mise-activated shells;
   otherwise prefix with `mise x --` (e.g. `mise x -- kubectl get nodes`).
-- A Hetzner Cloud project + API token (goes into `.env`)
+- Either a Hetzner Cloud project + API token (goes into `.env`), **or** an
+  existing Ubuntu 24.04 VPS you can SSH into as root — e.g. netcup
+  (see [Bring your own VPS](#bring-your-own-vps-netcup-et-al))
 - A GitHub repo for this code (private is fine) and, if private, a
   fine-grained PAT with read access to your org's repos
 - A domain where you can create one wildcard A record
@@ -83,6 +85,30 @@ The firewall only opens 80/443 publicly; SSH (22) and the Kubernetes API
 through ingress — NodePorts are unreachable by design.
 
 Now create the DNS record: `*.k8s.bitulzero.ro  A  <node IP>`.
+
+### Bring your own VPS (netcup et al.)
+
+If you already have a VPS (e.g. **netcup**) instead of letting Hetzner create
+one, use the netcup path. It's identical except it skips cloud provisioning and
+configures a **host firewall (ufw)** on the node itself — netcup has no cloud
+firewall API:
+
+```bash
+# .env: set SERVER_IP=<your VPS IP> (HCLOUD_TOKEN not needed)
+mise run provision-netcup   # inventory + ufw + hardening + k3s + ./kubeconfig
+```
+
+Full step-by-step: [`docs/install-netcup.md`](docs/install-netcup.md).
+
+Requirements: an Ubuntu 24.04 VPS reachable by SSH as `root` with your SSH key
+installed. The firewall allows 80/443 from anywhere and SSH/kube-api only from
+your `ADMIN_IP` (auto-detected if empty).
+
+> **⚠ Dynamic IP on netcup:** unlike Hetzner, there's no cloud API to unlock
+> yourself. If your IP rotates you're locked out at the host firewall — recover
+> via the netcup **web console (VNC)**, then `mise run netcup-firewall` to
+> re-allowlist. A static IP avoids this. Everything after this point
+> (bootstrap, GitOps, day-2) is provider-agnostic and works the same.
 
 ## 3. Bootstrap ArgoCD
 

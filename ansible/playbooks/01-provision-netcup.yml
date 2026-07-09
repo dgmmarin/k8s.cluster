@@ -1,0 +1,65 @@
+---
+# Bring-your-own VPS (e.g. netcup): the server already exists, so there is no
+# cloud API to create it or manage a cloud firewall. This play only prepares
+# the inventory and resolves the admin IP; the host firewall (ufw) and k3s are
+# handled by 02-k3s.yml. Drives everything over SSH to SERVER_IP.
+- name: Prepare an existing VPS for k3s (bring-your-own)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars_files:
+    - ../group_vars/all.yml
+  tasks:
+    - name: Require SERVER_IP
+      ansible.builtin.assert:
+        that: server_ip | length > 0
+        fail_msg: "Set SERVER_IP in .env to your VPS public IP."
+      tags: [firewall]
+
+    - name: Detect current public IP (ADMIN_IP not set)
+      ansible.builtin.uri:
+        url: https://api.ipify.org
+        return_content: true
+      register: public_ip_lookup
+      when: admin_ip | length == 0
+      tags: [firewall]
+
+    - name: Resolve effective admin IP
+      ansible.builtin.set_fact:
+        effective_admin_ip: >-
+          {{ admin_ip if admin_ip | length > 0
+             else public_ip_lookup.content | trim }}
+      tags: [firewall]
+
+    - name: Write inventory file
+      ansible.builtin.template:
+        src: ../templates/hosts.yml.j2
+        dest: ../inventory/hosts.yml
+        mode: "0644"
+      vars:
+        host_firewall: true
+      tags: [firewall]
+
+    - name: Add server to in-memory inventory (for same-run continuation)
+      ansible.builtin.add_host:
+        name: k3s-node
+        groups: k3s
+        ansible_host: "{{ server_ip }}"
+        ansible_user: root
+        host_firewall: true
+        admin_ip: "{{ effective_admin_ip }}"
+      tags: [firewall]
+
+    - name: Wait for SSH to become available
+      ansible.builtin.wait_for:
+        host: "{{ server_ip }}"
+        port: 22
+        timeout: 300
+
+    - name: Show target + allowlisted admin IP
+      ansible.builtin.debug:
+        msg: >-
+          Using VPS {{ server_ip }}. Host firewall (ufw) will allow SSH/kube-api
+          from {{ effective_admin_ip }} only; 80/443 open to the world.
+          Point *.{{ domain }} (wildcard A record) at {{ server_ip }}.
+      tags: [firewall]

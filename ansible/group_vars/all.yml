@@ -17,6 +17,11 @@ ssh_public_key_file: "{{ lookup('env', 'SSH_PUBLIC_KEY_FILE') | default(lookup('
 # current public IP at run time (dynamic-IP friendly: `make firewall`).
 admin_ip: "{{ lookup('env', 'ADMIN_IP') | default('', true) }}"
 
+# ── Bring-your-own VPS (e.g. netcup) ───────────────────────────────────────────
+# Public IP of an existing server. Only used by the netcup/BYO playbooks
+# (01-provision-netcup.yml); the Hetzner playbook derives the IP from the API.
+server_ip: "{{ lookup('env', 'SERVER_IP') | default('', true) }}"
+
 # ── k3s ──────────────────────────────────────────────────────────────────────
 k3s_version: "{{ lookup('env', 'K3S_VERSION') | default('v1.36.2+k3s1', true) }}"
 
