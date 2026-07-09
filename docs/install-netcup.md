@@ -1,7 +1,7 @@
 # Installing on a netcup VPS
 
 End-to-end guide to bring this cluster up on an existing **netcup** VPS (or any
-bring-your-own Ubuntu server). netcup gives you a bare VPS with no cloud API, so
+bring-your-own Debian/Ubuntu server). netcup gives you a bare VPS with no cloud API, so
 we skip Hetzner-style server creation and configure a **host firewall (ufw)** on
 the node itself. Everything after the cluster is up (ArgoCD + GitOps) is
 identical to the Hetzner path.
@@ -32,7 +32,9 @@ while testing — no DNS needed).
 1. In the netcup CCP (Customer Control Panel), order/select a VPS. Recommended
    minimum: **4 vCPU / 8 GB RAM / ≥80 GB disk** (the full platform — Prometheus,
    Loki, Grafana, ingress — needs the headroom). A VPS 1000 G11 or larger works.
-2. Install/reinstall the OS as **Ubuntu 24.04 LTS**.
+2. OS: **Debian 12/13** or **Ubuntu 22.04/24.04 LTS**. netcup's default
+   **Debian 13 (trixie)** image works out of the box — no reinstall needed. The
+   playbook is apt-based, so any recent Debian/Ubuntu is fine.
 3. Add your SSH public key during install, or set a root password temporarily.
 4. Note the VPS **public IPv4 address** — this is your `SERVER_IP`.
 
@@ -44,7 +46,7 @@ The playbook connects as `root` over SSH using key auth. Verify:
 ssh root@<SERVER_IP> 'echo ok && cat /etc/os-release | grep VERSION='
 ```
 
-If it prints `ok` and `VERSION="24.04..."` you're ready. If you only have a
+If it prints `ok` and a Debian/Ubuntu version you're ready. If you only have a
 password so far, install your key first:
 
 ```bash

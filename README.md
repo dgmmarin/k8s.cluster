@@ -34,7 +34,7 @@ the registry of product projects — each of which lives in its own git repo.
   Tools are on PATH inside `mise run` tasks and mise-activated shells;
   otherwise prefix with `mise x --` (e.g. `mise x -- kubectl get nodes`).
 - Either a Hetzner Cloud project + API token (goes into `.env`), **or** an
-  existing Ubuntu 24.04 VPS you can SSH into as root — e.g. netcup
+  existing Debian/Ubuntu VPS you can SSH into as root — e.g. netcup
   (see [Bring your own VPS](#bring-your-own-vps-netcup-et-al))
 - A GitHub repo for this code (private is fine) and, if private, a
   fine-grained PAT with read access to your org's repos
@@ -100,9 +100,9 @@ mise run provision-netcup   # inventory + ufw + hardening + k3s + ./kubeconfig
 
 Full step-by-step: [`docs/install-netcup.md`](docs/install-netcup.md).
 
-Requirements: an Ubuntu 24.04 VPS reachable by SSH as `root` with your SSH key
-installed. The firewall allows 80/443 from anywhere and SSH/kube-api only from
-your `ADMIN_IP` (auto-detected if empty).
+Requirements: a Debian/Ubuntu VPS reachable by SSH as `root` with your SSH key
+installed (netcup's default Debian 13 works as-is). The firewall allows 80/443
+from anywhere and SSH/kube-api only from your `ADMIN_IP` (auto-detected if empty).
 
 > **⚠ Dynamic IP on netcup:** unlike Hetzner, there's no cloud API to unlock
 > yourself. If your IP rotates you're locked out at the host firewall — recover

@@ -27,11 +27,29 @@
     state: started
     enabled: true
 
-- name: Disable SSH password authentication
+- name: Disable SSH password authentication (main config)
   ansible.builtin.lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "^#?PasswordAuthentication"
     line: "PasswordAuthentication no"
+  notify: Restart sshd
+
+# Cloud images (netcup's Debian, Hetzner's Ubuntu, etc.) often ship a
+# /etc/ssh/sshd_config.d/*-cloud-init.conf that re-enables password auth. It's
+# Include'd near the top of sshd_config, so it overrides the main file. A 00-
+# drop-in sorts first, and sshd uses the first obtained value per keyword —
+# so this reliably wins regardless of what cloud-init dropped in.
+- name: Ensure sshd drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+
+- name: Disable SSH password authentication (drop-in, overrides cloud-init)
+  ansible.builtin.copy:
+    dest: /etc/ssh/sshd_config.d/00-disable-password-auth.conf
+    content: "PasswordAuthentication no\n"
+    mode: "0644"
   notify: Restart sshd
 
 - name: Configure sysctl for Kubernetes workloads
