@@ -47,7 +47,8 @@
         ansible_host: "{{ server_ip }}"
         ansible_user: root
         host_firewall: true
-        admin_ip: "{{ effective_admin_ip }}"
+        # Not `admin_ip`: the play-level vars_files in 02-k3s.yml would override it.
+        firewall_admin_ip: "{{ effective_admin_ip }}"
       tags: [firewall]
 
     - name: Wait for SSH to become available

@@ -76,9 +76,9 @@
 
     - name: Require an admin IP for the firewall
       ansible.builtin.assert:
-        that: admin_ip | default('') | length > 0
+        that: firewall_admin_ip | default('') | length > 0
         fail_msg: >-
-          host_firewall is on but admin_ip is empty. Set ADMIN_IP in .env
+          host_firewall is on but firewall_admin_ip is empty. Set ADMIN_IP in .env
           or let the netcup playbook auto-detect your current public IP.
 
     - name: Allow SSH from the admin IP only
@@ -86,14 +86,14 @@
         rule: allow
         port: "22"
         proto: tcp
-        from_ip: "{{ admin_ip }}"
+        from_ip: "{{ firewall_admin_ip }}"
 
     - name: Allow the Kubernetes API from the admin IP only
       community.general.ufw:
         rule: allow
         port: "6443"
         proto: tcp
-        from_ip: "{{ admin_ip }}"
+        from_ip: "{{ firewall_admin_ip }}"
 
     - name: Allow HTTP from anywhere
       community.general.ufw:

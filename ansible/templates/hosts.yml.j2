@@ -11,5 +11,5 @@ all:
 {% if host_firewall | default(false) %}
           # Host firewall (ufw) — bring-your-own VPS only (see base role).
           host_firewall: true
-          admin_ip: {{ effective_admin_ip }}
+          firewall_admin_ip: {{ effective_admin_ip }}
 {% endif %}
