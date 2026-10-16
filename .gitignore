@@ -12,3 +12,4 @@ ansible/inventory/hosts.yml
 .env
 .venv/
 .mise.local.toml
+graft/
