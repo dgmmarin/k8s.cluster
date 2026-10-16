@@ -86,6 +86,8 @@ through ingress — NodePorts are unreachable by design.
 
 Now create the DNS record: `*.k8s.bitulzero.ro  A  <node IP>`.
 
+Full step-by-step: [`docs/install-hetzner.md`](docs/install-hetzner.md).
+
 ### Bring your own VPS (netcup et al.)
 
 If you already have a VPS (e.g. **netcup**) instead of letting Hetzner create
