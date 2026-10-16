@@ -1,0 +1,28 @@
+# The Note CRD for the notes project (projects/notes.yaml, repo dgmmarin/notes).
+# Project apps may not create cluster-scoped resources, so the platform installs it.
+# Wave 0: the CRD must exist before the projects ApplicationSet (wave 5).
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: notes-crd
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dgmmarin/k8s.cluster.git
+    targetRevision: main
+    path: platform/notes-crd
+  destination:
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 5
+      backoff:
+        duration: 30s
+        factor: 2
+        maxDuration: 5m

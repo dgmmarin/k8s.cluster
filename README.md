@@ -200,6 +200,14 @@ file and the app is pruned. Rules for project charts:
 - Project apps can't touch platform namespaces or create cluster-scoped
   resources (enforced by the `projects` AppProject).
 
+### Example: the notes app
+
+[dgmmarin/notes](https://github.com/dgmmarin/notes) is a project in its own
+repo, registered by `projects/notes.yaml`. It builds its own images in CI and
+seals its login into its own `deploy/` folder. Its `Note` CRD is
+cluster-scoped, so the platform installs it
+(`platform/app-of-apps/notes-crd.yaml`).
+
 ## Day-2 operations
 
 | Task | How |

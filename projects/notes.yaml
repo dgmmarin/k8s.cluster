@@ -1,0 +1,6 @@
+# Notes app (React frontend + Node API storing notes as `Note` CRD objects).
+# Its CRD is cluster-scoped, so the platform installs it (platform/notes-crd/).
+name: notes
+repoURL: https://github.com/dgmmarin/notes.git
+srcPath: deploy
+targetRevision: main
