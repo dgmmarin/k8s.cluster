@@ -9,7 +9,7 @@ containerPort: 80
 host: demo.k8s.bitulzero.ro
 # Validate new hosts against letsencrypt-staging first (rate limits!),
 # then switch to letsencrypt-prod.
-clusterIssuer: letsencrypt-staging
+clusterIssuer: letsencrypt-prod
 
 # Required on this cluster: every workload must declare requests/limits.
 resources:
