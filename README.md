@@ -262,6 +262,7 @@ platform/<component>/     Helm values / manifests for each component
 platform/secrets/         SealedSecrets synced to the cluster
 projects/                 one small YAML per product project ← add yours here
 examples/demo-app/chart/  reference chart for project repos
+docs/commands.md          setup, add-a-project, and daily commands
 ```
 
 Pinned versions (2026-07): k3s v1.36.2+k3s1 · argo-cd 10.1.2 · sealed-secrets
